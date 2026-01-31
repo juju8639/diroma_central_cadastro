@@ -361,7 +361,16 @@ def send_email(to_email: str, subject: str, body: str):
         return False
 
 
-def notify_new_request(user_email: str, req_id: int, category: str, subcategory: str, hotel_name: str):
+def emails_configured() -> bool:
+    """Retorna True se as credenciais de e-mail estiverem configuradas (não os placeholders)."""
+    if not EMAIL_SENDER or not EMAIL_PASSWORD:
+        return False
+    if EMAIL_SENDER == "seu_email@gmail.com" or EMAIL_PASSWORD == "sua_senha_app":
+        return False
+    return True
+
+
+def notify_new_request(user_email: str, req_id: int, category: str, subcategory: str, hotel_name: str, image_path: str = None):
     """Notifica sobre nova solicitação"""
     subject = f"✅ Solicitação #{req_id} Criada - {category}"
     body = f"""
@@ -397,7 +406,18 @@ def notify_new_request(user_email: str, req_id: int, category: str, subcategory:
     </html>
     """
     send_email(user_email, subject, body)
-    send_email(ADMIN_EMAIL, f"📥 Nova Solicitação - {category}", body)
+    ok_user = send_email(user_email, subject, body)
+    ok_admin = send_email(ADMIN_EMAIL, f"📥 Nova Solicitação - {category}", body)
+    # Se rodando dentro do Streamlit, avisar usuário se e-mails não estiverem configurados
+    try:
+        if not emails_configured():
+            st.warning("E-mails não estão configurados no ambiente. Notificações por e-mail não foram enviadas.")
+        else:
+            if not ok_user or not ok_admin:
+                st.error("Houve um problema ao enviar as notificações por e-mail. Verifique os logs.")
+    except Exception:
+        # se não estivermos no contexto Streamlit, ignore
+        pass
 
 
 def notify_response(user_email: str, req_id: int, response: str):
@@ -417,7 +437,15 @@ def notify_response(user_email: str, req_id: int, response: str):
         </body>
     </html>
     """
-    send_email(user_email, subject, body)
+    ok = send_email(user_email, subject, body)
+    try:
+        if not emails_configured():
+            st.warning("E-mails não estão configurados no ambiente. Notificações por e-mail não foram enviadas.")
+        else:
+            if not ok:
+                st.error("Houve um problema ao enviar a notificação de resposta por e-mail. Verifique os logs.")
+    except Exception:
+        pass
 
 def play_notification(kind: str):
     """Plays a short beep in the browser. kind: 'new' or 'responded'"""
@@ -771,7 +799,7 @@ def page_login():
 
 def page_menu():
     """Menu Principal - Dashboard com novo design"""
-    # Topbar com search e profile
+    # Topbar com profile (search removida)
     st.markdown(
         f"""<div class="topbar">
           <div class="topbar-row">
@@ -780,10 +808,7 @@ def page_menu():
               <div class="topbar-icon">🔔</div>
               <div class="topbar-icon">⚙️</div>
             </div>
-            <div class="searchbox">
-              <span style="color:#1a2a42; opacity:0.7;">🔍</span>
-              <input type="text" placeholder="Pesquisar..." style="border:none; background:transparent; outline:none; color:#1a2a42; flex:1; font-size:13px;" />
-            </div>
+            <!-- caixa de busca removida conforme solicitado -->
             <div class="profile">
               <div class="avatar" style="width:32px; height:32px;">{''.join([p[0].upper() for p in st.session_state.user_email.split('@')[0].split('.')[:2]])}</div>
               <div style="text-align:right;">
@@ -796,104 +821,20 @@ def page_menu():
         unsafe_allow_html=True,
     )
 
-    # Título principal
+    # Exibir título grande diRoma e texto de boas-vindas centralizado (remover cards)
     st.markdown(
-        """<div class="h1">Bem-vindo à <span>Central de Cadastro</span></div>""",
+        """
+        <div style='text-align:center; margin-top:20px; margin-bottom:24px;'>
+            <h1 style='font-size:56px; margin:0; color:#4c78ff; font-weight:900;'>diRoma</h1>
+            <h2 style='font-size:22px; margin:8px 0 12px 0; color:#eaf1ff;'>Bem-vindo ao Central de cadastro</h2>
+            <div style='max-width:900px; margin:0 auto; color:#cbd5e1; font-size:14px; line-height:1.5;'>
+                <p>Com o objetivo de aprimorar as solicitações e alinhar os processos, foi desenvolvido o site de Central de cadastro.</p>
+                <p>Em caso de dúvidas, entre em contato pelo e-mail <b>cadastro.cmnet@diroma.com.br</b> ou via Teams.</p>
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-
-    # Grid de cards
-    st.markdown(
-        """<div class="grid">""",
-        unsafe_allow_html=True,
-    )
-
-    # Card 1: Itens
-    st.markdown(
-        """<div class="card">
-          <div class="card-title">📋 Itens</div>
-          <div class="card-sub">Cadastrar novos itens para o sistema</div>
-          <div class="card-btnrow">""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Acessar", use_container_width=True, key="btn_itens"):
-        st.session_state.page = "itens"
-        st.rerun()
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Card 2: Compras
-    st.markdown(
-        """<div class="card">
-          <div class="card-title">🛒 Compras</div>
-          <div class="card-sub">Solicitar compras para seus hotéis</div>
-          <div class="card-btnrow">""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Acessar", use_container_width=True, key="btn_compras"):
-        st.session_state.page = "compras"
-        st.rerun()
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Card 3: Fornecedor
-    st.markdown(
-        """<div class="card">
-          <div class="card-title">🏪 Fornecedor</div>
-          <div class="card-sub">Cadastrar novos fornecedores</div>
-          <div class="card-btnrow">""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Acessar", use_container_width=True, key="btn_fornecedor"):
-        st.session_state.page = "fornecedor"
-        st.rerun()
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Card 4: Minhas Solicitações
-    st.markdown(
-        """<div class="card">
-          <div class="card-title">✉️ Solicitações</div>
-          <div class="card-sub">Gerenciar todas as solicitações</div>
-          <div class="card-btnrow">""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Ver Solicitações", use_container_width=True, key="btn_minhas"):
-        st.session_state.page = "minhas_solicitacoes"
-        st.rerun()
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Card 5: Meu Perfil
-    st.markdown(
-        """<div class="card">
-          <div class="card-title">👤 Perfil</div>
-          <div class="card-sub">Editar dados pessoais</div>
-          <div class="card-btnrow">""",
-        unsafe_allow_html=True,
-    )
-    if st.button("Acessar", use_container_width=True, key="btn_perfil"):
-        st.session_state.page = "perfil"
-        st.rerun()
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Card 6: Admin (se for admin)
-    if st.session_state.user_role == "admin":
-        st.markdown(
-            """<div class="card">
-              <div class="card-title">🛠️ Administrador</div>
-              <div class="card-sub">Gerenciar solicitações e usuários</div>
-              <div class="card-btnrow">""",
-            unsafe_allow_html=True,
-        )
-        col_admin1, col_admin2 = st.columns(2)
-        with col_admin1:
-            if st.button("Painel", use_container_width=True, key="btn_admin"):
-                st.session_state.page = "admin"
-                st.rerun()
-        with col_admin2:
-            if st.button("Criar Admin", use_container_width=True, key="btn_criar_admin"):
-                st.session_state.page = "criar_admin"
-                st.rerun()
-        st.markdown("</div></div>", unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def page_itens():
@@ -957,7 +898,7 @@ def page_itens():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Associação", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Associação", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Itens", "Associação", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -996,7 +937,7 @@ def page_itens():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Itens", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1028,7 +969,7 @@ def page_itens():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Itens de PDV", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens de PDV", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens de PDV", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1055,7 +996,7 @@ def page_itens():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Link", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Link", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Itens", "Link", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1101,7 +1042,7 @@ def page_compras():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Compras", "Via Link", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Link", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Link", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1128,7 +1069,7 @@ def page_compras():
                     st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Compras", "Via Itens", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Itens", hotel_info["name"])
+                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Itens", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1173,7 +1114,7 @@ def page_fornecedor():
                 st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Fornecedor", "Cadastro", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
                 time.sleep(0.5)
             req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-            notify_new_request(st.session_state.user_email, req_id, "Fornecedor", "Cadastro", hotel_info["name"])
+            notify_new_request(st.session_state.user_email, req_id, "Fornecedor", "Cadastro", hotel_info["name"], img_path)
             play_notification('new')
             st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
             time.sleep(2)
