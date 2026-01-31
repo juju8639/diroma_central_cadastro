@@ -429,19 +429,8 @@ def notify_new_request(user_email: str, req_id: int, category: str, subcategory:
         </body>
     </html>
     """
-    send_email(user_email, subject, body)
     ok_user = send_email(user_email, subject, body)
     ok_admin = send_email(ADMIN_EMAIL, f"📥 Nova Solicitação - {category}", body)
-    # Se rodando dentro do Streamlit, avisar usuário se e-mails não estiverem configurados
-    try:
-        if not emails_configured():
-            st.warning("E-mails não estão configurados no ambiente. Notificações por e-mail não foram enviadas.")
-        else:
-            if not ok_user or not ok_admin:
-                st.error("Houve um problema ao enviar as notificações por e-mail. Verifique os logs.")
-    except Exception:
-        # se não estivermos no contexto Streamlit, ignore
-        pass
 
 
 def notify_response(user_email: str, req_id: int, response: str):
@@ -462,14 +451,6 @@ def notify_response(user_email: str, req_id: int, response: str):
     </html>
     """
     ok = send_email(user_email, subject, body)
-    try:
-        if not emails_configured():
-            st.warning("E-mails não estão configurados no ambiente. Notificações por e-mail não foram enviadas.")
-        else:
-            if not ok:
-                st.error("Houve um problema ao enviar a notificação de resposta por e-mail. Verifique os logs.")
-    except Exception:
-        pass
 
 def play_notification(kind: str):
     """Plays a short beep in the browser. kind: 'new' or 'responded'"""
@@ -854,12 +835,6 @@ def page_menu():
     st.markdown(
         f"""<div class="topbar">
           <div class="topbar-row">
-            <div style="display:flex; gap:8px;">
-              <div class="topbar-icon">📱</div>
-              <div class="topbar-icon">🔔</div>
-              <div class="topbar-icon">⚙️</div>
-            </div>
-            <!-- caixa de busca removida conforme solicitado -->
             <div class="profile">
               <div class="avatar" style="width:32px; height:32px;">{''.join([p[0].upper() for p in st.session_state.user_email.split('@')[0].split('.')[:2]])}</div>
               <div style="text-align:right;">
