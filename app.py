@@ -691,13 +691,12 @@ def page_login():
     col1, col2, col3 = st.columns([1, 1.5, 1])
     
     with col2:
-        # Header
+        # Header (sem logo)
         st.markdown(
             """
-            <div style='text-align: center; margin-bottom: 32px; margin-top: 60px;'>
-                <div style='margin-bottom: 12px;'><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80'%3E%3Cdefs%3E%3ClinearGradient id='blueGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%234c78ff;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%232d55e8;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='20' y='55' font-family='Arial' font-size='48' font-weight='bold' fill='url(%23blueGrad)' letter-spacing='2'%3EdiRoma%3C/text%3E%3Cpath d='M 10 65 Q 20 60, 30 65 T 50 65' stroke='%234c78ff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" style="width:150px; height:60px;" /></div>
-                <h1 style='color: #eaf1ff; font-size: 32px; margin: 0 0 8px 0; font-weight: 800;'>diRoma</h1>
-                <p style='color: #cbd5e1; font-size: 14px; margin: 0;'>Central de Cadastro</p>
+            <div style='text-align: center; margin-bottom: 16px; margin-top: 20px;'>
+                <h1 style='color: #eaf1ff; font-size: 28px; margin: 0 0 4px 0; font-weight: 800;'>diRoma</h1>
+                <p style='color: #cbd5e1; font-size: 12px; margin: 0;'>Central de Cadastro</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -879,13 +878,19 @@ def page_menu():
         st.markdown(
             """<div class="card">
               <div class="card-title">🛠️ Administrador</div>
-              <div class="card-sub">Gerenciar todas as solicitações</div>
+              <div class="card-sub">Gerenciar solicitações e usuários</div>
               <div class="card-btnrow">""",
             unsafe_allow_html=True,
         )
-        if st.button("Acessar Painel", use_container_width=True, key="btn_admin"):
-            st.session_state.page = "admin"
-            st.rerun()
+        col_admin1, col_admin2 = st.columns(2)
+        with col_admin1:
+            if st.button("Painel", use_container_width=True, key="btn_admin"):
+                st.session_state.page = "admin"
+                st.rerun()
+        with col_admin2:
+            if st.button("Criar Admin", use_container_width=True, key="btn_criar_admin"):
+                st.session_state.page = "criar_admin"
+                st.rerun()
         st.markdown("</div></div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
@@ -900,7 +905,9 @@ def page_itens():
     </div>
     """, unsafe_allow_html=True)
 
-    hotel_label = st.selectbox("Hotel", ["Selecione..."] + HOTEL_OPTIONS, key="itens_hotel")
+    col_hotel, col_submenu, col_condominio = st.columns(3)
+    with col_hotel:
+        hotel_label = st.selectbox("Hotel", ["Selecione..."] + HOTEL_OPTIONS, key="itens_hotel")
     if hotel_label == "Selecione...":
         st.info("Selecione um hotel para continuar")
         return
@@ -909,25 +916,30 @@ def page_itens():
     hotel_info = HOTEL_BY_CODE[hotel_code]
     hotel_group = hotel_info["group"]
     
-    submenu = st.radio("Tipo de Solicitação", ["Associação", "Itens", "Itens de PDV", "Link"], horizontal=True)
+    with col_submenu:
+        submenu = st.selectbox("Tipo", ["Associação", "Itens", "Itens de PDV", "Link"], key="itens_submenu")
+    with col_condominio:
+        condominio = st.selectbox("Condomínio", ["Não", "Sim"], key="itens_cond")
+    
     tipos_insumo = sorted(list(CONTAS_POR_GRUPO.get(hotel_group, {}).keys()))
-    condominio = st.radio("Condomínio", ["Não", "Sim"], horizontal=True)
 
     if submenu == "Associação":
         with st.form("form_assoc"):
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             with col1:
-                nome = st.text_input("Nome")
-                codigo = st.text_input("Código")
+                nome = st.text_input("Nome", key="assoc_nome")
             with col2:
-                tipo_insumo = st.selectbox("Tipo de insumo", ["Selecione..."] + tipos_insumo, key="assoc_tipo")
-                if tipo_insumo != "Selecione...":
-                    ce, cs = CONTAS_POR_GRUPO[hotel_group].get(tipo_insumo, ("", ""))
-                    col_ce, col_cs = st.columns(2)
-                    with col_ce:
-                        st.text_input("Conta Entrada", value=ce, disabled=True)
-                    with col_cs:
-                        st.text_input("Conta Saída", value=cs, disabled=True)
+                tipo_insumo = st.selectbox("Tipo", ["Selecione..."] + tipos_insumo, key="assoc_tipo")
+            with col3:
+                codigo = st.text_input("Código", key="assoc_cod")
+            
+            if tipo_insumo != "Selecione...":
+                ce, cs = CONTAS_POR_GRUPO[hotel_group].get(tipo_insumo, ("", ""))
+                col_ce, col_cs = st.columns(2)
+                with col_ce:
+                    st.text_input("Conta Entrada", value=ce, disabled=False, key="assoc_ce")
+                with col_cs:
+                    st.text_input("Conta Saída", value=cs, disabled=False, key="assoc_cs")
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="assoc_img")
             obs = st.text_area("Observação", height=80)
             col_sub, col_can = st.columns(2)
@@ -1417,6 +1429,62 @@ def page_admin():
                     st.rerun()
 
 
+
+def page_criar_admin():
+    """Criar novo administrador"""
+    st.markdown("""
+    <div class='page-header'>
+        <h1>🔐 Criar Novo Administrador</h1>
+        <p style='color: #cbd5e1; margin: 8px 0 0 0;'>Conceder privilégios de administrador a um usuário</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    with st.form("form_criar_admin"):
+        email = st.text_input("E-mail do novo admin", placeholder="usuario@diroma.com.br")
+        password = st.text_input("Senha inicial", type="password", placeholder="senha segura")
+        confirm = st.text_input("Confirmar senha", type="password", placeholder="confirme a senha")
+        
+        col_sub, col_can = st.columns(2)
+        with col_sub:
+            submitted = st.form_submit_button("✅ Criar Admin", use_container_width=True)
+        with col_can:
+            st.form_submit_button("❌ Cancelar", use_container_width=True, disabled=True)
+        
+        if submitted:
+            if not email or not password or not confirm:
+                st.error("⚠️ Preencha todos os campos")
+                return
+            if not email.endswith("@diroma.com.br"):
+                st.error("❌ Use um e-mail @diroma.com.br")
+                return
+            if password != confirm:
+                st.error("❌ Senhas não conferem")
+                return
+            if len(password) < 6:
+                st.error("❌ Senha deve ter no mínimo 6 caracteres")
+                return
+            
+            # Verificar se usuário já existe
+            if st.session_state.db.get_user(email):
+                st.error("❌ E-mail já cadastrado")
+                return
+            
+            # Criar usuário como admin
+            with st.spinner("Criando novo administrador..."):
+                try:
+                    salt, hash_hex = hash_password(password)
+                    st.session_state.db.conn.execute(
+                        "INSERT INTO users (email, salt_hex, hash_hex, role) VALUES (?, ?, ?, ?)",
+                        (email, salt, hash_hex, "admin")
+                    )
+                    st.session_state.db.conn.commit()
+                    st.success(f"✅ Novo administrador criado: {email}")
+                    time.sleep(2)
+                    st.session_state.page = "admin"
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Erro ao criar admin: {str(e)}")
+
 # ============================================================================
 # MAIN
 # ============================================================================
@@ -1442,6 +1510,13 @@ def main():
             page_perfil()
         elif page == "admin":
             page_admin()
+        elif page == "criar_admin":
+            if st.session_state.user_role == "admin":
+                page_criar_admin()
+            else:
+                st.error("❌ Acesso negado")
+                st.session_state.page = "menu"
+                st.rerun()
         else:
             st.session_state.page = "menu"
             st.rerun()
