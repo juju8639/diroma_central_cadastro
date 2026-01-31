@@ -425,33 +425,44 @@ def play_notification(kind: str):
         freq = 880
     else:
         freq = 440
-    js = f"""
-    <script>
-    (function(){{
-        try {{
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.type = 'sine';
-            o.frequency.value = {freq};
-            o.connect(g);
-            g.connect(ctx.destination);
-            g.gain.setValueAtTime(0.0001, ctx.currentTime);
-            o.start();
-            g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-            setTimeout(function(){{
-                g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
-                o.stop(ctx.currentTime + 0.16);
-                try {{ ctx.close(); }} catch(e){{}}
-            }}, 150);
-        }} catch(e) {{ console.error(e); }}
-    }})();
-    </script>
-    """
+    # Generate a short WAV beep on the server and embed as base64 audio element.
     try:
-        from streamlit.components.v1 import html as _html
-        _html(js, height=0)
+        import io
+        import base64
+        import math
+        import struct
+        import wave
+
+        duration = 0.16  # seconds
+        sample_rate = 44100
+        n_samples = int(sample_rate * duration)
+        max_amp = 32767 // 3
+
+        buf = io.BytesIO()
+        with wave.open(buf, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            frames = bytearray()
+            for i in range(n_samples):
+                t = i / sample_rate
+                sample = int(max_amp * math.sin(2.0 * math.pi * freq * t))
+                frames += struct.pack('<h', sample)
+            wf.writeframes(frames)
+
+        b64 = base64.b64encode(buf.getvalue()).decode('ascii')
+        audio_html = f'<audio autoplay><source src="data:audio/wav;base64,{b64}" type="audio/wav"></audio>'
+        try:
+            from streamlit.components.v1 import html as _html
+            _html(audio_html, height=0)
+        except Exception:
+            # Fallback: try injecting as markdown (less reliable)
+            try:
+                st.markdown(audio_html, unsafe_allow_html=True)
+            except Exception:
+                pass
     except Exception:
+        # If audio generation fails, silently ignore to avoid breaking the app
         pass
 
 def now_iso():
