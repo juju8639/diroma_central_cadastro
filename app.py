@@ -117,16 +117,19 @@ st.set_page_config(
 # CSS PREMIUM - NOVO DESIGN
 CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
 /* Fundo geral */
 .stApp {
-  background: radial-gradient(1200px 600px at 50% 0%, #3d5b86 0%, #223552 45%, #1a2a42 100%);
+    background: radial-gradient(1200px 600px at 50% 0%, #3d5b86 0%, #223552 45%, #1a2a42 100%);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    color-scheme: dark;
 }
 
 /* remove padding default e controla largura */
 .block-container {
-  padding-top: 1.0rem;
-  padding-bottom: 2.0rem;
-  max-width: 1200px;
+    padding-top: 1.0rem;
+    padding-bottom: 2.0rem;
+    max-width: 1100px;
 }
 
 /* Sidebar */
@@ -135,14 +138,14 @@ section[data-testid="stSidebar"] {
   border-right: 1px solid rgba(255,255,255,0.06);
 }
 .sidebar-brand {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding: 8px 6px 14px 6px;
-  color:#ffffff;
-  font-weight:700;
-  font-size:22px;
-  letter-spacing:0.2px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: 12px 10px 16px 10px;
+    color:#ffffff;
+    font-weight:800;
+    font-size:18px;
+    letter-spacing:0.4px;
 }
 .sidebar-user {
   display:flex;
@@ -247,11 +250,11 @@ section[data-testid="stSidebar"] {
 
 /* Título principal */
 .h1 {
-  color: #eaf1ff;
-  font-size: 28px;
-  font-weight: 800;
-  margin: 20px 0 14px 0;
-  text-shadow: 0 10px 26px rgba(0,0,0,0.25);
+    color: #eaf1ff;
+    font-size: 32px;
+    font-weight: 800;
+    margin: 20px 0 12px 0;
+    text-shadow: 0 8px 20px rgba(0,0,0,0.22);
 }
 .h1 span{
   color:#d8e6ff;
@@ -266,13 +269,13 @@ section[data-testid="stSidebar"] {
   margin-top: 16px;
 }
 .card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.78) 100%);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 18px;
-  padding: 16px 16px 14px 16px;
-  box-shadow: 0 14px 32px rgba(0,0,0,0.24);
-  position: relative;
-  overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.9) 100%);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 18px 18px 16px 18px;
+    box-shadow: 0 10px 26px rgba(4,18,40,0.35);
+    position: relative;
+    overflow: hidden;
 }
 .card:before{
   content:"";
@@ -302,15 +305,15 @@ section[data-testid="stSidebar"] {
   justify-content:flex-end;
 }
 .primary-btn{
-  padding: 10px 18px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #4c78ff 0%, #2d55e8 100%);
-  color: white;
-  font-weight: 700;
-  border: 1px solid rgba(0,0,0,0.08);
-  box-shadow: 0 10px 18px rgba(46,86,232,0.35);
-  cursor:pointer;
-  user-select:none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #4c78ff 0%, #2d55e8 100%);
+    color: white;
+    font-weight: 700;
+    border: none;
+    box-shadow: 0 8px 20px rgba(46,86,232,0.26);
+    cursor:pointer;
+    user-select:none;
 }
 .primary-btn:hover{
   filter: brightness(1.05);
@@ -324,6 +327,23 @@ section[data-testid="stSidebar"] {
   padding: 24px;
   box-shadow: 0 14px 32px rgba(0,0,0,0.24);
   margin-top: 16px;
+}
+
+/* Inputs e labels mais limpos */
+label, .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+input, textarea, select {
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    background: rgba(255,255,255,0.98) !important;
+}
+
+/* Ajuste para botões padrão do Streamlit */
+button[style] {
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
 }
 
 /* Ajuste Streamlit: esconder headers */
