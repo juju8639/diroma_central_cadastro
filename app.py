@@ -336,9 +336,13 @@ label, .stTextInput>div>div>input, .stTextArea>div>div>textarea {
 input, textarea, select {
     padding: 10px 12px !important;
     border-radius: 10px !important;
-    border: 1px solid rgba(0,0,0,0.06) !important;
-    background: rgba(255,255,255,0.98) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    background: rgba(255,255,255,0.04) !important;
+    color: #eaf1ff !important;
 }
+
+/* esconder caixa de busca topbar quando desejado */
+.searchbox { display: none !important; }
 
 /* Ajuste para botões padrão do Streamlit */
 button[style] {
@@ -641,6 +645,16 @@ class Database:
         """)
         self.conn.commit()
 
+        # contacts table to store emails provided in forms for future use
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS contacts (
+            email TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        """)
+        self.conn.commit()
+
         cur.execute("SELECT * FROM users WHERE email = ?", (ADMIN_EMAIL,))
         if not cur.fetchone():
             salt_hex, hash_hex = hash_password(ADMIN_PASSWORD)
@@ -701,6 +715,23 @@ class Database:
     def get_request(self, req_id: int):
         cur = self.conn.cursor()
         cur.execute("SELECT * FROM requests WHERE id = ?", (req_id,))
+        return cur.fetchone()
+
+    def save_contact(self, email: str):
+        if not email:
+            return
+        email = email.strip().lower()
+        cur = self.conn.cursor()
+        now = now_iso()
+        try:
+            cur.execute("INSERT INTO contacts(email, created_at, updated_at) VALUES (?,?,?)", (email, now, now))
+        except sqlite3.IntegrityError:
+            cur.execute("UPDATE contacts SET updated_at = ? WHERE email = ?", (now, email))
+        self.conn.commit()
+
+    def get_contact(self, email: str):
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM contacts WHERE email = ?", (email.strip().lower(),))
         return cur.fetchone()
 
     def update_request(self, req_id: int, status: str, response: str):
@@ -903,6 +934,7 @@ def page_itens():
                     st.text_input("Conta Saída", value=cs, disabled=False, key="assoc_cs")
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="assoc_img")
             obs = st.text_area("Observação", height=80)
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="assoc_contact_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -915,10 +947,13 @@ def page_itens():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Associação", "nome": nome, "codigo": codigo, "tipo_insumo": tipo_insumo, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Associação", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Itens", "Associação", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Associação", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Itens", "Associação", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -942,6 +977,7 @@ def page_itens():
                         st.text_input("Conta Saída", value=cs, disabled=True)
             obs = st.text_area("Observação", height=80)
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="itens_img")
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="itens_contact_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -954,10 +990,13 @@ def page_itens():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Itens", "nome": nome, "gramatura": gramatura, "tipo_insumo": tipo_insumo, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Itens", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Itens", "Itens", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Itens", "Itens", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -974,6 +1013,7 @@ def page_itens():
                 codigo_barras = st.text_input("Código de barras")
             obs = st.text_area("Observação", height=80)
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="pdv_img")
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="pdv_contact_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -986,10 +1026,13 @@ def page_itens():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Itens de PDV", "nome": nome, "gramatura": gramatura, "codigo": codigo_barras, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Itens de PDV", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Itens", "Itens de PDV", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Itens de PDV", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Itens", "Itens de PDV", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1001,6 +1044,7 @@ def page_itens():
             link = st.text_input("Link")
             obs = st.text_area("Observação", height=100)
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="link_img")
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="link_contact_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -1013,10 +1057,13 @@ def page_itens():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Link", "link": link, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Itens", "Link", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Itens", "Link", hotel_code, hotel_info["name"], hotel_group, condominio, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Itens", "Link", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Itens", "Link", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1047,6 +1094,7 @@ def page_compras():
             link = st.text_input("Link")
             obs = st.text_area("Observação", height=100)
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="comp_link_img")
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="comp_link_contact_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -1059,10 +1107,13 @@ def page_compras():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Compra via Link", "link": link, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Compras", "Via Link", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Compras", "Via Link", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Link", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Compras", "Via Link", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1074,6 +1125,7 @@ def page_compras():
             gramatura = st.text_input("Gramatura")
             obs = st.text_area("Observação", height=100)
             img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="comp_itens_img")
+            contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="comp_itens_email")
             col_sub, col_can = st.columns(2)
             with col_sub:
                 submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -1086,10 +1138,13 @@ def page_compras():
                 with st.spinner("Salvando solicitação..."):
                     img_path = save_upload_file(img) if img else ""
                     data = {"tipo": "Compra via Itens", "nome": nome, "gramatura": gramatura, "obs": obs}
-                    st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Compras", "Via Itens", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                    request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                    st.session_state.db.create_request(st.session_state.user_id, request_email, "Compras", "Via Itens", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                    if contact_email:
+                        st.session_state.db.save_contact(request_email)
                     time.sleep(0.5)
                 req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-                notify_new_request(st.session_state.user_email, req_id, "Compras", "Via Itens", hotel_info["name"], img_path)
+                notify_new_request(request_email, req_id, "Compras", "Via Itens", hotel_info["name"], img_path)
                 play_notification('new')
                 st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
                 time.sleep(2)
@@ -1119,6 +1174,7 @@ def page_fornecedor():
             documento = st.text_input(f"{tipo_doc}")
         obs = st.text_area("Observação", height=100)
         img = st.file_uploader("Imagem", type=["png", "jpg", "jpeg", "webp"], key="forn_img")
+        contact_email = st.text_input("E-mail de contato (opcional)", value=(st.session_state.user_email or ""), key="forn_contact_email")
         col_sub, col_can = st.columns(2)
         with col_sub:
             submitted = st.form_submit_button("✅ Salvar", use_container_width=True)
@@ -1131,10 +1187,13 @@ def page_fornecedor():
             with st.spinner("Salvando solicitação..."):
                 img_path = save_upload_file(img) if img else ""
                 data = {"tipo": "Fornecedor", "tipo_doc": tipo_doc, "documento": documento, "obs": obs}
-                st.session_state.db.create_request(st.session_state.user_id, st.session_state.user_email, "Fornecedor", "Cadastro", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                request_email = (contact_email.strip().lower() if contact_email else st.session_state.user_email)
+                st.session_state.db.create_request(st.session_state.user_id, request_email, "Fornecedor", "Cadastro", hotel_code, hotel_info["name"], hotel_info["group"], None, data, img_path)
+                if contact_email:
+                    st.session_state.db.save_contact(request_email)
                 time.sleep(0.5)
             req_id = st.session_state.db.get_user_requests(st.session_state.user_id)[0]['id']
-            notify_new_request(st.session_state.user_email, req_id, "Fornecedor", "Cadastro", hotel_info["name"], img_path)
+            notify_new_request(request_email, req_id, "Fornecedor", "Cadastro", hotel_info["name"], img_path)
             play_notification('new')
             st.success(f"✅ Solicitação #{req_id} efetuada com sucesso!")
             time.sleep(2)
