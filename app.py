@@ -665,6 +665,21 @@ class Database:
         except sqlite3.IntegrityError:
             return False
 
+    def create_admin(self, email: str, password: str):
+        """Create a user with admin role. Returns True if created, False if exists."""
+        email = email.strip().lower()
+        salt_hex, hash_hex = hash_password(password)
+        cur = self.conn.cursor()
+        try:
+            cur.execute(
+                "INSERT INTO users(email, salt_hex, hash_hex, role, created_at) VALUES (?,?,?,?,?)",
+                (email, salt_hex, hash_hex, "admin", now_iso()),
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
     def create_request(self, user_id: int, user_email: str, category: str, 
                       subcategory: str, hotel_code: str, hotel_name: str, 
                       hotel_group: str, condominio: str, data: dict, image_path: str = ""):
@@ -1427,30 +1442,32 @@ def page_admin():
 
 def page_criar_admin():
     """Criar novo administrador"""
+    # somente administradores podem acessar essa página
+    if st.session_state.user_role != "admin":
+        st.error("Acesso negado: somente administradores podem criar novos administradores")
+        return
+
     st.markdown("""
     <div class='page-header'>
         <h1>🔐 Criar Novo Administrador</h1>
         <p style='color: #cbd5e1; margin: 8px 0 0 0;'>Conceder privilégios de administrador a um usuário</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     with st.form("form_criar_admin"):
-        email = st.text_input("E-mail do novo admin", placeholder="usuario@diroma.com.br")
-        password = st.text_input("Senha inicial", type="password", placeholder="senha segura")
-        confirm = st.text_input("Confirmar senha", type="password", placeholder="confirme a senha")
-        
+        email = st.text_input("E-mail do novo admin", placeholder="usuario@diroma.com.br", key="novo_admin_email")
+        password = st.text_input("Senha inicial", type="password", placeholder="senha segura", key="novo_admin_pwd")
+        confirm = st.text_input("Confirmar senha", type="password", placeholder="confirme a senha", key="novo_admin_conf")
+
         col_sub, col_can = st.columns(2)
         with col_sub:
             submitted = st.form_submit_button("✅ Criar Admin", use_container_width=True)
         with col_can:
             st.form_submit_button("❌ Cancelar", use_container_width=True, disabled=True)
-        
+
         if submitted:
             if not email or not password or not confirm:
                 st.error("⚠️ Preencha todos os campos")
-                return
-            if not email.endswith("@diroma.com.br"):
-                st.error("❌ Use um e-mail @diroma.com.br")
                 return
             if password != confirm:
                 st.error("❌ Senhas não conferem")
@@ -1458,27 +1475,24 @@ def page_criar_admin():
             if len(password) < 6:
                 st.error("❌ Senha deve ter no mínimo 6 caracteres")
                 return
-            
+
             # Verificar se usuário já existe
             if st.session_state.db.get_user(email):
                 st.error("❌ E-mail já cadastrado")
                 return
-            
-            # Criar usuário como admin
+
+            # Criar usuário como admin usando Database.create_admin
             with st.spinner("Criando novo administrador..."):
-                try:
-                    salt, hash_hex = hash_password(password)
-                    st.session_state.db.conn.execute(
-                        "INSERT INTO users (email, salt_hex, hash_hex, role) VALUES (?, ?, ?, ?)",
-                        (email, salt, hash_hex, "admin")
-                    )
-                    st.session_state.db.conn.commit()
-                    st.success(f"✅ Novo administrador criado: {email}")
-                    time.sleep(2)
-                    st.session_state.page = "admin"
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"❌ Erro ao criar admin: {str(e)}")
+                created = st.session_state.db.create_admin(email, password)
+                time.sleep(0.6)
+
+            if created:
+                st.success(f"✅ Novo administrador criado: {email}")
+                time.sleep(1)
+                st.session_state.page = "admin"
+                st.rerun()
+            else:
+                st.error("❌ E-mail já cadastrado ou erro ao criar")
 
 # ============================================================================
 # MAIN
