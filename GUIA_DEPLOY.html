@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>diRoma - Guia de Deploy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4c78ff 0%, #2d55e8 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: #4c78ff;
+            border-bottom-color: #4c78ff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4c78ff;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: #4c78ff;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .step h3 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step p, .step li {
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .step ul {
+            margin-left: 30px;
+        }
+        
+        .code {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .link-btn {
+            display: inline-block;
+            background: #4c78ff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .link-btn:hover {
+            background: #2d55e8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 diRoma Central de Cadastro</h1>
+            <p>Guia Completo de Deploy no Streamlit Cloud</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab(0)">📤 Upload GitHub</button>
+                <button class="tab-btn" onclick="showTab(1)">☁️ Deploy Streamlit</button>
+                <button class="tab-btn" onclick="showTab(2)">📧 Configurar Emails</button>
+                <button class="tab-btn" onclick="showTab(3)">✅ Verificação</button>
+            </div>
+            
+            <!-- Tab 1: Upload GitHub -->
+            <div class="tab-content active">
+                <h2>📤 Passo 1: Upload no GitHub</h2>
+                
+                <div class="step">
+                    <h3><span class="step-number">1</span> Acesse seu repositório</h3>
+                    <p>Clique no link abaixo ou abra em seu navegador:</p>
+                    <a href="https://github.com/juju8639/diroma_central_cadastro" target="_blank" class="link-btn">
+                        Abrir Repositório GitHub
+                    </a>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">2</span> Clique em "Add file"</h3>
+                    <p>No repositório, clique no botão verde "Add file" → "Upload files"</p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">3</span> Arraste os arquivos</h3>
+                    <p>Selecione ou arraste estes arquivos de <code>c:\cadastro</code>:</p>
+                    <ul>
+                        <li>✅ <strong>app.py</strong> - Aplicação principal</li>
+                        <li>✅ <strong>requirements.txt</strong> - Dependências</li>
+                        <li>✅ <strong>logo.svg</strong> - Logo diRoma</li>
+                        <li>✅ <strong>README.md</strong> - Documentação</li>
+                        <li>✅ <strong>DEPLOY_PRONTO.md</strong> - Guia</li>
+                        <li>✅ <strong>.gitignore</strong> - Ignorar arquivos</li>
+                    </ul>
+                    <div class="warning">
+                        ⚠️ Nota: O arquivo <strong>.streamlit/config.toml</strong> precisa ser criado manualmente no GitHub
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">4</span> Criar arquivo .streamlit/config.toml</h3>
+                    <p>No GitHub, clique em "Add file" → "Create new file"</p>
+                    <p>Nome: <code>.streamlit/config.toml</code></p>
+                    <p>Conteúdo:</p>
+                    <div class="code">[theme]
+primaryColor = "#4c78ff"
+backgroundColor = "#1a2a42"
+secondaryBackgroundColor = "#223552"
+textColor = "#eaf1ff"
+font = "sans serif"
+
+[client]
+showErrorDetails = false
+
+[logger]
+level = "warning"
+
+[server]
+port = 8501
+headless = true
+enableXsrfProtection = true</div>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">5</span> Commit</h3>
+                    <p>Clique "Commit changes" e pronto!</p>
+                </div>
+                
+                <div class="success">
+                    ✅ Seu repositório está pronto para deploy
+                </div>
+            </div>
+            
+            <!-- Tab 2: Deploy Streamlit -->
+            <div class="tab-content">
+                <h2>☁️ Passo 2: Deploy no Streamlit Cloud</h2>
+                
+                <div class="step">
+                    <h3><span class="step-number">1</span> Acesse Streamlit Cloud</h3>
+                    <a href="https://streamlit.io/cloud" target="_blank" class="link-btn">
+                        Abrir Streamlit Cloud
+                    </a>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">2</span> Clique "New app"</h3>
+                    <p>Se não estiver conectado, faça login com sua conta GitHub</p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">3</span> Configure a aplicação</h3>
+                    <p>Preencha os campos:</p>
+                    <ul>
+                        <li><strong>Repository:</strong> juju8639/diroma_central_cadastro</li>
+                        <li><strong>Branch:</strong> main</li>
+                        <li><strong>Main file path:</strong> app.py</li>
+                    </ul>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">4</span> Deploy</h3>
+                    <p>Clique "Deploy" e aguarde (leva 1-2 minutos)</p>
+                </div>
+                
+                <div class="success">
+                    ✅ Seu app estará live em poucos minutos!<br>
+                    URL: <code>https://seu-usuario-diroma-xxxxx.streamlit.app</code>
+                </div>
+            </div>
+            
+            <!-- Tab 3: Configurar Emails -->
+            <div class="tab-content">
+                <h2>📧 Passo 3: Configurar Notificações por Email</h2>
+                
+                <div class="step">
+                    <h3><span class="step-number">1</span> Acesse as Secrets</h3>
+                    <p>No seu app no Streamlit Cloud, clique em ⚙️ (canto superior direito)</p>
+                    <p>Selecione: <strong>Settings</strong> → <strong>Secrets</strong></p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">2</span> Ative 2FA no Gmail</h3>
+                    <p>Se ainda não fez:</p>
+                    <a href="https://myaccount.google.com/security" target="_blank" class="link-btn">
+                        Ir para Google Account Security
+                    </a>
+                    <p style="margin-top: 10px;">Ative "2-Step Verification"</p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">3</span> Gere Senha de App</h3>
+                    <a href="https://myaccount.google.com/apppasswords" target="_blank" class="link-btn">
+                        Abrir App Passwords
+                    </a>
+                    <p style="margin-top: 10px;">Selecione:</p>
+                    <ul>
+                        <li>Select app: <strong>Mail</strong></li>
+                        <li>Select device: <strong>Windows Computer</strong></li>
+                    </ul>
+                    <p style="margin-top: 10px;">Google gerará uma senha de 16 caracteres. <strong>Copie-a!</strong></p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">4</span> Adicione as Secrets</h3>
+                    <p>No campo de secrets do Streamlit, cole:</p>
+                    <div class="code">EMAIL_SENDER = "seu_email@gmail.com"
+EMAIL_PASSWORD = "xxxxxxxxxxxxxxxx"</div>
+                    <p style="margin-top: 10px;">Substitua os valores pelos seus.</p>
+                </div>
+                
+                <div class="success">
+                    ✅ Emails serão enviados automaticamente quando:<br>
+                    • Uma nova solicitação é criada<br>
+                    • Uma solicitação é respondida
+                </div>
+            </div>
+            
+            <!-- Tab 4: Verificação -->
+            <div class="tab-content">
+                <h2>✅ Passo 4: Testar a Aplicação</h2>
+                
+                <div class="step">
+                    <h3><span class="step-number">1</span> Acesse o app</h3>
+                    <p>Abra a URL gerada pelo Streamlit Cloud (ex: https://seu-app.streamlit.app)</p>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">2</span> Faça login</h3>
+                    <p>Use as credenciais padrão:</p>
+                    <ul>
+                        <li><strong>Email:</strong> juliano.teixeira@diroma.com.br</li>
+                        <li><strong>Senha:</strong> abc123</li>
+                    </ul>
+                    <div class="warning">
+                        ⚠️ ALTERE A SENHA NA PRIMEIRA EXECUÇÃO!
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">3</span> Teste uma solicitação</h3>
+                    <p>Como usuário normal:</p>
+                    <ol style="margin-left: 20px;">
+                        <li>Crie uma conta com email @diroma.com.br</li>
+                        <li>Vá em "Itens" → Crie uma solicitação</li>
+                        <li>Verifique se recebeu email</li>
+                    </ol>
+                </div>
+                
+                <div class="step">
+                    <h3><span class="step-number">4</span> Teste resposta (admin)</h3>
+                    <p>Como admin:</p>
+                    <ol style="margin-left: 20px;">
+                        <li>Faça logout
+</li>
+                        <li>Faça login com: juliano.teixeira@diroma.com.br / abc123</li>
+                        <li>Vá em "Painel Admin"</li>
+                        <li>Responda uma solicitação</li>
+                        <li>Verifique se o usuário recebeu email</li>
+                    </ol>
+                </div>
+                
+                <div class="success">
+                    ✅ Tudo funcionando?<br>
+                    Parabéns! Seu site está live e pronto para usar!<br>
+                    <br>
+                    Compartilhe a URL com suas equipes dos hotéis.
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>diRoma Central de Cadastro v1.0 • Janeiro 2026</p>
+            <p style="margin-top: 10px; font-size: 12px;">
+                Dúvidas? Veja README.md ou DEPLOY_PRONTO.md no repositório
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(index) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            tabs[index].classList.add('active');
+            buttons[index].classList.add('active');
+        }
+    </script>
+</body>
+</html>

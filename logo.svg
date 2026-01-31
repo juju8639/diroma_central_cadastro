@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <!-- Logo diRoma -->
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4c78ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d55e8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Texto "diRoma" estilizado -->
+  <text x="20" y="55" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="url(#blueGrad)" letter-spacing="2">
+    diRoma
+  </text>
+  
+  <!-- Onda decorativa -->
+  <path d="M 10 65 Q 20 60, 30 65 T 50 65" stroke="#4c78ff" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>
